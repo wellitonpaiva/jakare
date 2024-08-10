@@ -9,27 +9,6 @@ import io.ktor.server.response.*
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
-data class Reptile(
-    val order: String,
-    val family: String,
-    val englishCommonName: String,
-    val spanishCommonName: String,
-    val portugueseCommonName: String,
-    val scientificName: String,
-)
-
-fun String.toReptile(): Reptile {
-    val rep = this.split(",")
-    return Reptile(
-        order = rep[0],
-        family = rep[1],
-        englishCommonName = rep[2],
-        spanishCommonName = rep[3],
-        portugueseCommonName = rep[4],
-        scientificName = rep[5]
-    )
-}
-
 fun main() {
     val reptiles: List<Reptile> = {}.javaClass.getResource("/reptiles.csv")
         ?.openStream()
@@ -54,11 +33,10 @@ fun Application.module(reptiles: List<Reptile>) {
                         attributes["hx-trigger"] = "input changed delay:500ms, search"
                         attributes["hx-target"] = "#list"
                     }
-                    div { id="list" }
+                    div { id = "list" }
                 }
             }
         }
-
         get("/list") {
             call.respondText { reptiles.search(call.request.queryParameters["search"].orEmpty()) }
         }
@@ -66,28 +44,28 @@ fun Application.module(reptiles: List<Reptile>) {
 }
 
 fun List<Reptile>.search(search: String) =
-        createHTML().table {
-            id = "search"
-            tr {
-                th { +"Order" }
-                th { +"Family" }
-                th { +"English Common Name" }
-                th { +"Spanish Common Name" }
-                th { +"Portuguese Common Name" }
-                th { +"Scientific Name" }
-            }
-            filter { if (search.isNotBlank()) it.scientificName.contains(search) else true}
-                .map {
-                    tr {
-                        td { +it.order }
-                        td { +it.family }
-                        td { +it.englishCommonName }
-                        td { +it.spanishCommonName }
-                        td { +it.portugueseCommonName }
-                        td { +it.scientificName }
-                    }
-                }
+    createHTML().table {
+        id = "search"
+        tr {
+            th { +"Order" }
+            th { +"Family" }
+            th { +"English Common Name" }
+            th { +"Spanish Common Name" }
+            th { +"Portuguese Common Name" }
+            th { +"Scientific Name" }
         }
+        filter { it.searchByName(search) }
+            .map {
+                tr {
+                    td { +it.order }
+                    td { +it.family }
+                    td { +it.englishCommonName }
+                    td { +it.spanishCommonName }
+                    td { +it.portugueseCommonName }
+                    td { +it.scientificName }
+                }
+            }
+    }
 
 
 class LayoutTemplate : Template<HTML> {
