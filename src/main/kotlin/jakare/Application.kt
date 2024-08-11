@@ -5,23 +5,27 @@ import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.routing.*
 import io.ktor.server.html.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import kotlinx.html.*
 import kotlinx.html.stream.createHTML
 
 fun main() {
-    val reptiles: List<Reptile> = {}.javaClass.getResource("/reptiles.csv")
-        ?.openStream()
-        ?.bufferedReader()
-        ?.readLines()
-        ?.map(String::toReptile)
-        .orEmpty()
+    val reptiles: MutableMap<String, Reptile> = {}.javaClass.getResource("/reptiles.csv")!!
+        .openStream()
+        .bufferedReader()
+        .readLines()
+        .associate {
+            val reptile = it.toReptile()
+            reptile.id to reptile
+        }
+        .toMutableMap()
 
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = { module(reptiles) })
         .start(wait = true)
 }
 
-fun Application.module(reptiles: List<Reptile>) {
+fun Application.module(reptiles: MutableMap<String, Reptile>) {
     routing {
         get("/") {
             call.respondHtmlTemplate(LayoutTemplate()) {
@@ -40,32 +44,22 @@ fun Application.module(reptiles: List<Reptile>) {
         get("/list") {
             call.respondText { reptiles.search(call.request.queryParameters["search"].orEmpty()) }
         }
+        get("/reptile/{id}/edit") {
+            val reptile = reptiles[call.parameters["id"]!!]!!
+            call.respondText {
+                createHTML().tr { rowEdit(reptile) }
+            }
+        }
+        post("/reptile/{id}/edit") {
+            val id = call.parameters["id"]!!
+            val newReptile = call.receiveParameters().toReptile()
+            reptiles[id] = newReptile
+            call.respondText {
+                createHTML().tr { rowView(reptiles[id]!!) }
+            }
+        }
     }
 }
-
-fun List<Reptile>.search(search: String) =
-    createHTML().table {
-        id = "search"
-        tr {
-            th { +"Order" }
-            th { +"Family" }
-            th { +"English Common Name" }
-            th { +"Spanish Common Name" }
-            th { +"Portuguese Common Name" }
-            th { +"Scientific Name" }
-        }
-        filter { it.searchByName(search) }
-            .map {
-                tr {
-                    td { +it.order }
-                    td { +it.family }
-                    td { +it.englishCommonName }
-                    td { +it.spanishCommonName }
-                    td { +it.portugueseCommonName }
-                    td { +it.scientificName }
-                }
-            }
-    }
 
 
 class LayoutTemplate : Template<HTML> {

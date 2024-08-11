@@ -1,5 +1,7 @@
 package jakare
 
+import io.ktor.http.*
+
 data class Reptile(
     val order: String,
     val family: String,
@@ -8,6 +10,7 @@ data class Reptile(
     val portugueseCommonName: String,
     val scientificName: String,
 ) {
+    val id: String = scientificName.replace(" ", "-")
     fun searchByName(search: String) =
         if (search.isNotBlank()) {
             order.contains(search, ignoreCase = true) ||
@@ -30,3 +33,12 @@ fun String.toReptile(): Reptile =
             scientificName = it[5]
         )
     }
+
+fun Parameters.toReptile() = Reptile(
+    order = this["order"].orEmpty(),
+    family = this["family"].orEmpty(),
+    englishCommonName = this["englishCommonName"].orEmpty(),
+    spanishCommonName = this["spanishCommonName"].orEmpty(),
+    portugueseCommonName = this["portugueseCommonName"].orEmpty(),
+    scientificName = this["scientificName"].orEmpty()
+)
