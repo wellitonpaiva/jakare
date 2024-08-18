@@ -1,9 +1,5 @@
-val kotlin_version: String by project
-val logback_version: String by project
-
 plugins {
     kotlin("jvm") version "2.0.0"
-    id("io.ktor.plugin") version "2.3.11"
     application
 }
 
@@ -12,7 +8,6 @@ version = "0.0.1"
 
 application {
     mainClass = "jakare.ApplicationKt"
-    applicationDefaultJvmArgs = listOf("-Dio.ktor.development=true")
 }
 
 repositories {
@@ -20,11 +15,15 @@ repositories {
 }
 
 dependencies {
-    implementation("io.ktor:ktor-server-core-jvm")
-    implementation("io.ktor:ktor-server-netty-jvm")
-    implementation("io.ktor:ktor-server-html-builder")
-    implementation("org.webjars.npm:htmx.org:1.9.4")
-    implementation("ch.qos.logback:logback-classic:$logback_version")
+    implementation(platform("org.http4k:http4k-bom:5.27.0.0"))
+    implementation("org.http4k:http4k-core")
+    implementation("org.http4k:http4k-server-jetty")
+    implementation("org.http4k:http4k-format-jackson")
+
+    implementation("it.skrape:skrapeit:1.2.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-html:0.11.0")
+    implementation("org.apache.solr:solr-solrj:9.6.1")
+    implementation("ch.qos.logback:logback-classic:1.4.14")
     testImplementation("io.ktor:ktor-server-tests-jvm")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version")
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit:2.0.0")
 }
